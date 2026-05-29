@@ -1,74 +1,218 @@
+"""
+Financial NLP Intelligence Streamlit App
+Apeiron AI
+"""
+
 import os
-import pickle
+import re
+import string
+import joblib
 import streamlit as st
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import nltk
+
+# ---------------------------------------------------
+# DOWNLOAD NLTK RESOURCES
+# ---------------------------------------------------
+nltk.download("stopwords")
+nltk.download("punkt")
 
 # ---------------------------------------------------
 # DYNAMIC PATH RESOLUTION
 # ---------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "model", "best_model.pkl")
-VECTORIZER_PATH = os.path.join(BASE_DIR, "..", "model", "tfidf_vectorizer.pkl")
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "model",
+    "best_sentiment_model.pkl"
+)
+
+VECTORIZER_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "model",
+    "tfidf_vectorizer.pkl"
+)
+
+CONFIG_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "model",
+    "config.json"
+)
 
 # ---------------------------------------------------
-# PAGE CONFIG & ASSET LOADING
+# PAGE CONFIGURATION
 # ---------------------------------------------------
-st.set_page_config(page_title="Financial Sentiment", page_icon="📊")
+st.set_page_config(
+    page_title="Financial NLP Intelligence",
+    page_icon="📊",
+    layout="centered"
+)
 
+# ---------------------------------------------------
+# LOAD MODEL & VECTORIZER
+# ---------------------------------------------------
 @st.cache_resource
 def load_assets():
-    with open(MODEL_PATH, "rb") as m_file:
-        mod = pickle.load(m_file)
-    with open(VECTORIZER_PATH, "rb") as v_file:
-        vec = pickle.load(v_file)
-    return mod, vec
+
+    model = joblib.load(MODEL_PATH)
+
+    vectorizer = joblib.load(VECTORIZER_PATH)
+
+    return model, vectorizer
 
 try:
+
     model, vectorizer = load_assets()
-except FileNotFoundError:
-    st.error("⚠️ Model or Vectorizer files not found. Check your path directory structure!")
+
+except Exception as e:
+
+    st.error(f"Error loading model files: {e}")
+
     st.stop()
 
 # ---------------------------------------------------
-# UI INTERFACE
+# TEXT PREPROCESSING
 # ---------------------------------------------------
-st.title("📊 Financial Sentiment Intelligence")
-st.markdown("Analyze financial headlines or tweets to extract underlying market sentiment.")
+stop_words = set(stopwords.words("english"))
 
-text = st.text_area("Enter financial text:", placeholder="Type financial headline or market news here...")
+def clean_text(text):
+
+    text = text.lower()
+
+    text = re.sub(
+        r'[%s]' % re.escape(string.punctuation),
+        '',
+        text
+    )
+
+    tokens = word_tokenize(text)
+
+    tokens = [
+        word for word in tokens
+        if word not in stop_words
+    ]
+
+    return " ".join(tokens)
 
 # ---------------------------------------------------
-# PREDICTION LOGIC
+# APPLICATION HEADER
+# ---------------------------------------------------
+st.title("📊 Financial NLP Intelligence")
+
+st.markdown("""
+Analyze financial headlines and predict market sentiment using machine learning.
+
+Supported Sentiments:
+- Positive 📈
+- Negative 📉
+- Neutral 😐
+""")
+
+# ---------------------------------------------------
+# USER INPUT
+# ---------------------------------------------------
+user_text = st.text_area(
+    "Enter Financial News or Headline",
+    placeholder="Example: Tesla shares surge after strong quarterly earnings..."
+)
+
+# ---------------------------------------------------
+# PREDICTION BUTTON
 # ---------------------------------------------------
 if st.button("🔍 Predict Sentiment"):
-    if text.strip() == "":
-        st.warning("Please enter some text before predicting.")
+
+    if user_text.strip() == "":
+
+        st.warning("Please enter financial text.")
+
     else:
-        # 1. Transform text to numerical vector
-        vec_text = vectorizer.transform([text])
-        
-        # 2. Predict numeric class label (e.g., 0, 1, or 2)
-        pred_numeric = int(model.predict(vec_text)[0])
-        
-        # 3. Map numerical predictions back to human-readable text
-        # (Adjust these keys to -1, 0, 1 if your model uses that encoding instead!)
-        sentiment_mapping = {
-            0: "NEGATIVE",
-            1: "NEUTRAL",
-            2: "POSITIVE"
-        }
-        
-        pred_label = sentiment_mapping.get(pred_numeric, f"CLASS {pred_numeric}")
-        
-        # 4. Dynamic visual output feedback
-        if "POSITIVE" in pred_label:
-            st.success(f"📈 Sentiment Prediction: {pred_label}")
-        elif "NEGATIVE" in pred_label:
-            st.error(f"📉 Sentiment Prediction: {pred_label}")
+
+        # Clean text
+        cleaned_text = clean_text(user_text)
+
+        # Vectorize
+        vectorized_text = vectorizer.transform(
+            [cleaned_text]
+        )
+
+        # Predict
+        prediction = model.predict(vectorized_text)[0]
+
+        # Confidence Score
+        confidence = None
+
+        if hasattr(model, "predict_proba"):
+
+            probabilities = model.predict_proba(
+                vectorized_text
+            )[0]
+
+            confidence = max(probabilities)
+
+        # ---------------------------------------------------
+        # DISPLAY RESULTS
+        # ---------------------------------------------------
+        st.markdown("## Prediction Result")
+
+        if prediction == "Positive":
+
+            st.success(
+                f"📈 Sentiment: {prediction}"
+            )
+
+        elif prediction == "Negative":
+
+            st.error(
+                f"📉 Sentiment: {prediction}"
+            )
+
         else:
-            st.info(f"😐 Sentiment Prediction: {pred_label}")
+
+            st.info(
+                f"😐 Sentiment: {prediction}"
+            )
+
+        # Confidence
+        if confidence is not None:
+
+            st.metric(
+                "Confidence Score",
+                f"{confidence * 100:.2f}%"
+            )
+
+        # Cleaned text
+        st.markdown("### Cleaned Text")
+
+        st.code(cleaned_text)
+
+# ---------------------------------------------------
+# SIDEBAR INFORMATION
+# ---------------------------------------------------
+st.sidebar.title("ℹ️ Model Information")
+
+st.sidebar.markdown("""
+### Models Compared
+- Naive Bayes
+- Logistic Regression
+- SVM
+
+### Vectorization
+TF-IDF
+
+### NLP Task
+Financial Sentiment Analysis
+""")
 
 # ---------------------------------------------------
 # FOOTER
 # ---------------------------------------------------
 st.markdown("---")
-st.caption("Apeiron AI Lab — Financial NLP Module")
+
+st.caption(
+    "Apeiron AI — Boundless Possibilities, Infinite Potential"
+)
