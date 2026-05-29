@@ -1,6 +1,6 @@
 # Financial NLP Intelligence
 
-## Naive Bayes vs Logistic Regression vs SVM with Streamlit Deployment
+## Deep Neural Network (DNN) vs LSTM vs GRU with Streamlit Deployment
 
 **Apeiron AI — Boundless Possibilities, Infinite Potential**
 
@@ -16,15 +16,15 @@ Financial institutions process massive volumes of textual information every day,
 * Investor sentiment
 * Economic announcements
 
-This project builds a complete **Financial NLP Intelligence Pipeline** capable of analyzing financial text and automatically predicting sentiment using classical machine learning algorithms.
+This project builds a complete **Financial NLP Intelligence Pipeline** capable of analyzing financial text and automatically predicting sentiment using modern Deep Learning architectures.
 
 The system compares:
 
-* Naive Bayes
-* Logistic Regression
-* Support Vector Machine (SVM)
+* Deep Neural Network (DNN)
+* Long Short-Term Memory (LSTM)
+* Gated Recurrent Unit (GRU)
 
-and deploys the best-performing model through an interactive **Streamlit web application**.
+and deploys the best-performing model through an interactive Streamlit web application.
 
 ---
 
@@ -40,7 +40,7 @@ This project helps automate:
 * Trading signal support
 * Automated sentiment classification
 
-using Natural Language Processing (NLP).
+using Natural Language Processing (NLP) and Deep Learning.
 
 ---
 
@@ -50,10 +50,14 @@ By completing this project, you will learn how to:
 
 * Build NLP preprocessing pipelines
 * Clean and tokenize financial text
-* Perform TF-IDF vectorization
-* Train machine learning classifiers
+* Create TF-IDF features
+* Create tokenized text sequences
+* Use word embeddings
+* Train Deep Neural Networks
+* Train LSTM networks
+* Train GRU networks
 * Evaluate NLP classification models
-* Compare multiple NLP algorithms fairly
+* Compare deep learning architectures
 * Save trained models for deployment
 * Build and deploy a Streamlit application
 
@@ -63,7 +67,7 @@ By completing this project, you will learn how to:
 
 ### Dataset Used
 
-**Financial Sentiment Analysis Dataset**
+Financial Sentiment Analysis Dataset
 
 Dataset Source:
 
@@ -79,8 +83,6 @@ https://huggingface.co/datasets/pauri32/fiqa-2018
 
 # 📊 Dataset Structure
 
-Typical dataset format:
-
 | Sentence                                              | Sentiment |
 | ----------------------------------------------------- | --------- |
 | Netflix stock surges after earnings beat expectations | Positive  |
@@ -92,7 +94,7 @@ Typical dataset format:
 # 🏗️ Project Structure
 
 ```text
-M4-Project02/
+Financial-NLP-Intelligence/
 │
 ├── data/
 │   └── data.csv
@@ -101,10 +103,9 @@ M4-Project02/
 │   └── Financial_NLP_Intelligence.ipynb
 │
 ├── model/
-│   ├── nb_model.pkl
-│   ├── lr_model.pkl
-│   ├── svm_model.pkl
-│   ├── best_model.pkl
+│   ├── best_sentiment_model.h5
+│   ├── tokenizer.pkl
+│   ├── label_encoder.pkl
 │   ├── tfidf_vectorizer.pkl
 │   └── config.json
 │
@@ -121,7 +122,7 @@ M4-Project02/
 
 ## STEP 1 — Data Loading
 
-The dataset is loaded using pandas and inspected for:
+The dataset is loaded and inspected for:
 
 * Missing values
 * Class distribution
@@ -141,49 +142,42 @@ The NLP preprocessing pipeline includes:
 * Tokenization
 * Whitespace cleanup
 
-Example:
-
-```python
-def clean_text(text):
-    text = text.lower()
-    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)
-    tokens = word_tokenize(text)
-
-    tokens = [
-        word for word in tokens
-        if word not in stop_words
-    ]
-
-    return " ".join(tokens)
-```
-
 ---
 
-## STEP 3 — Feature Extraction
+## STEP 3 — Feature Engineering
 
-Text is transformed into numerical vectors using:
+Two text representations are created:
 
-* TF-IDF Vectorization
+### DNN Input
 
-Configuration:
+TF-IDF Vectorization
 
 ```python
 TfidfVectorizer(max_features=5000)
 ```
 
-TF-IDF helps emphasize important financial keywords while reducing common word influence.
+### LSTM / GRU Input
+
+Tokenization + Padding
+
+```python
+Tokenizer(num_words=10000)
+pad_sequences(maxlen=50)
+```
+
+These representations allow comparison between traditional feature engineering and sequence-based deep learning approaches.
 
 ---
 
-# 🤖 Machine Learning Models
+# 🤖 Deep Learning Models
 
-The following machine learning algorithms are compared:
+The following deep learning architectures are compared:
 
-| Model                        | Purpose                                |
-| ---------------------------- | -------------------------------------- |
-| Naive Bayes                  | Fast probabilistic text classification |
-| Logistic Regression          | Linear sentiment classification        |
-| Support Vector Machine (SVM) | High-dimensional text classification   |
+| Model | Purpose                                          |
+| ----- | ------------------------------------------------ |
+| DNN   | Feedforward neural network using TF-IDF features |
+| LSTM  | Sequence modeling with memory cells              |
+| GRU   | Efficient sequence modeling with gated units     |
 
 ---
 
@@ -211,10 +205,13 @@ print(classification_report(y_test, y_pred))
 The notebook includes:
 
 * Sentiment distribution charts
-* Word frequency analysis
 * Confusion matrices
 * Accuracy comparison charts
-* Precision/Recall/F1-score comparison plots
+* F1-score comparison charts
+* Training accuracy curves
+* Validation accuracy curves
+* Training loss curves
+* Validation loss curves
 
 ---
 
@@ -240,20 +237,20 @@ Confidence:
 
 # 🏆 Results
 
-| Model               | Accuracy | Precision | Recall | F1-score |
-| ------------------- | -------- | --------- | ------ | -------- |
-| Naive Bayes         | TBD      | TBD       | TBD    | TBD      |
-| Logistic Regression | TBD      | TBD       | TBD    | TBD      |
-| SVM                 | TBD      | TBD       | TBD    | TBD      |
+| Model | Accuracy | Precision | Recall | F1-score |
+| ----- | -------- | --------- | ------ | -------- |
+| DNN   | TBD      | TBD       | TBD    | TBD      |
+| LSTM  | TBD      | TBD       | TBD    | TBD      |
+| GRU   | TBD      | TBD       | TBD    | TBD      |
 
 ---
 
 # 🧠 Key Insights
 
-* TF-IDF performs well for financial sentiment analysis because financial text is sparse and high-dimensional.
-* SVM often performs best in NLP classification tasks because it creates strong decision boundaries.
-* Logistic Regression provides strong interpretability and stable performance.
-* Naive Bayes trains extremely quickly and performs well on smaller datasets.
+* DNN provides a strong baseline using TF-IDF features.
+* LSTM captures long-term dependencies in financial text.
+* GRU often achieves comparable performance with fewer parameters and faster training.
+* Sequence-based deep learning models can better capture contextual information than traditional bag-of-words approaches.
 
 ---
 
@@ -264,7 +261,9 @@ The best-performing model is exported for deployment.
 Saved files:
 
 ```text
-best_model.pkl
+best_sentiment_model.h5
+tokenizer.pkl
+label_encoder.pkl
 tfidf_vectorizer.pkl
 config.json
 ```
@@ -280,59 +279,35 @@ The project includes a Streamlit web application for real-time financial sentime
 * Interactive financial text input
 * Real-time sentiment prediction
 * Confidence score display
-* Clean UI
+* Class probability visualization
 * Automatic preprocessing
-* Dynamic sentiment feedback
-
----
-
-# ▶️ Running the Streamlit App
-
-Navigate to the Streamlit folder:
-
-```bash
-cd streamlit_app
-```
-
-Run the application:
-
-```bash
-streamlit run app.py
-```
-
-Expected Output:
-
-```text
-Local URL: http://localhost:8501
-```
+* Deep learning inference
 
 ---
 
 # 🖥️ Streamlit Application Features
 
-The deployed application supports:
-
 ✅ Positive / Negative / Neutral prediction
+
 ✅ Confidence score visualization
-✅ Automatic TF-IDF preprocessing
+
+✅ Automatic text preprocessing
+
+✅ Deep Learning inference
+
 ✅ Dynamic UI alerts
-✅ Real-time inference
+
 ✅ Cached model loading
 
 ---
 
 # 📦 Installation
 
-Clone repository:
-
 ```bash
 git clone <repository-url>
-cd M4-Project02
-```
 
-Install dependencies:
+cd Financial-NLP-Intelligence
 
-```bash
 pip install -r requirements.txt
 ```
 
@@ -346,6 +321,7 @@ pandas
 matplotlib
 seaborn
 scikit-learn
+tensorflow
 nltk
 streamlit
 joblib
@@ -356,20 +332,11 @@ wordcloud
 
 # 🧪 Reproducibility
 
-Random seeds are configured to ensure reproducible results:
-
 ```python
 np.random.seed(42)
 random.seed(42)
+tf.random.set_seed(42)
 ```
-
----
-
-# ⚠️ Important Notes
-
-* Ensure preprocessing used during inference matches training preprocessing.
-* Keep model and vectorizer versions synchronized.
-* Use stratified train/test splitting to preserve sentiment balance.
 
 ---
 
@@ -377,35 +344,36 @@ random.seed(42)
 
 Possible future upgrades:
 
-* BERT-based transformers
-* FinBERT integration
-* Financial word embeddings
-* Real-time news API integration
-* Attention-based NLP models
-* Deep learning sentiment classification
-* Docker deployment
-* Cloud hosting
+* FinBERT
+* BERT
+* RoBERTa
+* Transformer Encoder Models
+* Attention Mechanisms
+* Financial Word Embeddings
+* Real-Time News APIs
+* Docker Deployment
+* Cloud Hosting
 
 ---
 
 # 🧰 Technologies Used
 
 * Python
-* Scikit-Learn
+* TensorFlow / Keras
 * NLTK
 * Pandas
 * NumPy
 * Matplotlib
 * Seaborn
+* Scikit-Learn
 * Streamlit
 * Joblib
-* Hugging Face Datasets
 
 ---
 
 # 💼 CV / Resume Description
 
-Developed an end-to-end Financial NLP Intelligence system using TF-IDF vectorization and classical machine learning algorithms (Naive Bayes, Logistic Regression, and SVM) for financial sentiment analysis, including preprocessing, model comparison, evaluation, visualization, artifact serialization, and Streamlit deployment.
+Developed an end-to-end Financial NLP Intelligence system using Deep Learning architectures (DNN, LSTM, and GRU) for financial sentiment analysis, including text preprocessing, tokenization, feature engineering, model comparison, evaluation, visualization, model serialization, and Streamlit deployment.
 
 ---
 
@@ -422,4 +390,5 @@ This project is for educational and research purposes.
 ---
 
 © 2026 Apeiron AI
+
 Boundless Possibilities, Infinite Potential

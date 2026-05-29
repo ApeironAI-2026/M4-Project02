@@ -7,7 +7,13 @@ import os
 import re
 import string
 import joblib
+import numpy as np
 import streamlit as st
+import tensorflow as tf
+
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
@@ -15,38 +21,52 @@ import nltk
 # ---------------------------------------------------
 # DOWNLOAD NLTK RESOURCES
 # ---------------------------------------------------
+
 nltk.download("stopwords")
 nltk.download("punkt")
 
+try:
+    nltk.download("punkt_tab")
+except:
+    pass
+
 # ---------------------------------------------------
-# DYNAMIC PATH RESOLUTION
+# PATHS
 # ---------------------------------------------------
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 MODEL_PATH = os.path.join(
     BASE_DIR,
     "..",
     "model",
-    "best_sentiment_model.pkl"
+    "best_sentiment_model.h5"
 )
 
-VECTORIZER_PATH = os.path.join(
+TOKENIZER_PATH = os.path.join(
     BASE_DIR,
     "..",
     "model",
-    "tfidf_vectorizer.pkl"
+    "tokenizer.pkl"
 )
 
-CONFIG_PATH = os.path.join(
+ENCODER_PATH = os.path.join(
     BASE_DIR,
     "..",
     "model",
-    "config.json"
+    "label_encoder.pkl"
 )
 
 # ---------------------------------------------------
-# PAGE CONFIGURATION
+# PARAMETERS
 # ---------------------------------------------------
+
+MAX_LEN = 50
+
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
+
 st.set_page_config(
     page_title="Financial NLP Intelligence",
     page_icon="📊",
@@ -54,30 +74,34 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------
-# LOAD MODEL & VECTORIZER
+# LOAD ASSETS
 # ---------------------------------------------------
+
 @st.cache_resource
 def load_assets():
 
-    model = joblib.load(MODEL_PATH)
+    model = load_model(MODEL_PATH)
 
-    vectorizer = joblib.load(VECTORIZER_PATH)
+    tokenizer = joblib.load(TOKENIZER_PATH)
 
-    return model, vectorizer
+    encoder = joblib.load(ENCODER_PATH)
+
+    return model, tokenizer, encoder
+
 
 try:
 
-    model, vectorizer = load_assets()
+    model, tokenizer, encoder = load_assets()
 
 except Exception as e:
 
     st.error(f"Error loading model files: {e}")
-
     st.stop()
 
 # ---------------------------------------------------
-# TEXT PREPROCESSING
+# TEXT CLEANING
 # ---------------------------------------------------
+
 stop_words = set(stopwords.words("english"))
 
 def clean_text(text):
@@ -93,37 +117,42 @@ def clean_text(text):
     tokens = word_tokenize(text)
 
     tokens = [
-        word for word in tokens
+        word
+        for word in tokens
         if word not in stop_words
     ]
 
     return " ".join(tokens)
 
 # ---------------------------------------------------
-# APPLICATION HEADER
+# HEADER
 # ---------------------------------------------------
+
 st.title("📊 Financial NLP Intelligence")
 
 st.markdown("""
-Analyze financial headlines and predict market sentiment using machine learning.
+Analyze financial headlines and predict market sentiment using Deep Learning.
 
 Supported Sentiments:
+
 - Positive 📈
 - Negative 📉
 - Neutral 😐
 """)
 
 # ---------------------------------------------------
-# USER INPUT
+# INPUT
 # ---------------------------------------------------
+
 user_text = st.text_area(
     "Enter Financial News or Headline",
-    placeholder="Example: Tesla shares surge after strong quarterly earnings..."
+    placeholder="Tesla shares surge after strong quarterly earnings..."
 )
 
 # ---------------------------------------------------
-# PREDICTION BUTTON
+# PREDICTION
 # ---------------------------------------------------
+
 if st.button("🔍 Predict Sentiment"):
 
     if user_text.strip() == "":
@@ -132,31 +161,35 @@ if st.button("🔍 Predict Sentiment"):
 
     else:
 
-        # Clean text
         cleaned_text = clean_text(user_text)
 
-        # Vectorize
-        vectorized_text = vectorizer.transform(
+        sequence = tokenizer.texts_to_sequences(
             [cleaned_text]
         )
 
-        # Predict
-        prediction = model.predict(vectorized_text)[0]
+        padded_sequence = pad_sequences(
+            sequence,
+            maxlen=MAX_LEN,
+            padding="post"
+        )
 
-        # Confidence Score
-        confidence = None
+        probabilities = model.predict(
+            padded_sequence,
+            verbose=0
+        )[0]
 
-        if hasattr(model, "predict_proba"):
+        predicted_class = np.argmax(
+            probabilities
+        )
 
-            probabilities = model.predict_proba(
-                vectorized_text
-            )[0]
+        prediction = encoder.inverse_transform(
+            [predicted_class]
+        )[0]
 
-            confidence = max(probabilities)
+        confidence = float(
+            np.max(probabilities)
+        )
 
-        # ---------------------------------------------------
-        # DISPLAY RESULTS
-        # ---------------------------------------------------
         st.markdown("## Prediction Result")
 
         if prediction == "Positive":
@@ -177,40 +210,58 @@ if st.button("🔍 Predict Sentiment"):
                 f"😐 Sentiment: {prediction}"
             )
 
-        # Confidence
-        if confidence is not None:
+        st.metric(
+            "Confidence Score",
+            f"{confidence * 100:.2f}%"
+        )
 
-            st.metric(
-                "Confidence Score",
-                f"{confidence * 100:.2f}%"
+        st.markdown("### Class Probabilities")
+
+        classes = encoder.classes_
+
+        for label, prob in zip(
+            classes,
+            probabilities
+        ):
+
+            st.write(
+                f"**{label}:** {prob*100:.2f}%"
             )
 
-        # Cleaned text
         st.markdown("### Cleaned Text")
 
         st.code(cleaned_text)
 
 # ---------------------------------------------------
-# SIDEBAR INFORMATION
+# SIDEBAR
 # ---------------------------------------------------
+
 st.sidebar.title("ℹ️ Model Information")
 
 st.sidebar.markdown("""
 ### Models Compared
-- Naive Bayes
-- Logistic Regression
-- SVM
 
-### Vectorization
-TF-IDF
+- Deep Neural Network (DNN)
+- LSTM
+- GRU
+
+### Best Model
+
+GRU
+
+### Input Representation
+
+Tokenized Text + Embedding
 
 ### NLP Task
+
 Financial Sentiment Analysis
 """)
 
 # ---------------------------------------------------
 # FOOTER
 # ---------------------------------------------------
+
 st.markdown("---")
 
 st.caption(
